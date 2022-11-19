@@ -1,10 +1,12 @@
 <template>
     <div id="app">
         <el-container class="app-out-panel">
-            <el-header class="sys-header">系统标题</el-header>
+            <el-header class="sys-header">一张图项目</el-header>
             <el-container class="app-content-panel">
                 <el-aside width="200px" class="sys-menu">左侧菜单</el-aside>
-                <el-main class="sys-map">地图区域</el-main>
+                <el-main class="sys-map">
+                    <MapView />
+                </el-main>
             </el-container>
         </el-container>
     </div>
@@ -12,10 +14,10 @@
 
 <script>
 //import HelloWorld from './components/HelloWorld.vue'
-
+import MapView from './components/common/MapView';
 export default {
     name: 'App',
-    components: {},
+    components: { MapView },
 };
 </script>
 
@@ -42,5 +44,8 @@ body,
 }
 .sys-menu {
     background-color: #c0c4cc;
+}
+.sys-map {
+    padding: 5px !important;
 }
 </style>
