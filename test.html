@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My first Vue app</title>
+  <script src="https://unpkg.com/vue@2"></script>
+</head>
+<body>
+  <div id="app">
+    <span v-bind:title='message'>
+      鼠标悬停几秒钟查看绑定信息
+    </span>
+  </div>
+
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        message: '页面加载于'+ new Date().toLocaleString()
+      }
+    })
+  </script>
+</body>
+</html>

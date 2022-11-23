@@ -1,11 +1,30 @@
 <template>
     <div id="app">
         <el-container class="app-out-panel">
-            <el-header class="sys-header">一张图项目</el-header>
+            <el-header class="sys-header">一张图项目系统</el-header>
             <el-container class="app-content-panel">
-                <el-aside width="200px" class="sys-menu">左侧菜单</el-aside>
+                <el-aside class="sys-menu">
+                    <el-menu
+                        default-active="1-4-1"
+                        class="el-menu-vertical-demo"
+                        @select="handleMenuSelect"
+                        background-color="#545c64"
+                        text-color="#fff"
+                        active-text-color="#ffd04b"
+                        :collapse="true"
+                    >
+                        <el-menu-item index="1">
+                            <i class="el-icon-s-home"></i>
+                            <span slot="title">首页大屏</span>
+                        </el-menu-item>
+                        <el-menu-item index="2">
+                            <i class="el-icon-picture-outline"></i>
+                            <span slot="title">一张图</span>
+                        </el-menu-item>
+                    </el-menu>
+                </el-aside>
                 <el-main class="sys-map">
-                    <MapView />
+                    <router-view></router-view>
                 </el-main>
             </el-container>
         </el-container>
@@ -13,11 +32,20 @@
 </template>
 
 <script>
-//import HelloWorld from './components/HelloWorld.vue'
-import MapView from './components/common/MapView';
 export default {
     name: 'App',
-    components: { MapView },
+    components: {},
+    methods: {
+        handleMenuSelect(index) {
+            if (index === '1') {
+                // 跳转到首页大屏
+                this.$router.push('/');
+            } else if (index === '2') {
+                // 跳转到一张图
+                this.$router.push('/onemap');
+            }
+        },
+    },
 };
 </script>
 
@@ -36,14 +64,19 @@ body,
     height: 100%;
 }
 .sys-header {
-    background-color: #409eff;
+    background-color: #32373e;
     line-height: 60px;
     color: #fff;
     font-size: 20px;
     font-weight: 600;
 }
 .sys-menu {
-    background-color: #c0c4cc;
+    background-color: #545c64;
+    /* background-color: #fff; */
+    width: 64px !important;
+    overflow: hidden !important;
+    /* 是否隐藏水平滚动条 */
+    /* background-color: #c0c4cc; */
 }
 .sys-map {
     padding: 5px !important;
