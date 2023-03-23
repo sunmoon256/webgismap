@@ -26,6 +26,11 @@ export default {
                     label: '底图数据',
                     children: [
                         {
+                            label: '蓝色系地图',
+                            layid: 'layid',
+                            layurl: 'http://map.geoq.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer',
+                        },
+                        {
                             label: '暖色系地图',
                             layid: 'layid',
                             layurl: 'http://map.geoq.cn/arcgis/rest/services/ChinaOnlineStreetWarm/MapServer',
@@ -53,7 +58,7 @@ export default {
                         {
                             label: '县数据',
                             layid: 'layid',
-                            layurl: 'http://localhost:6080/arcgis/rest/services/test/county/FeatureServer',
+                            layurl: 'http://localhost:6080/arcgis/rest/services/test/county/FeatureServer/0',
                         },
                     ],
                 },

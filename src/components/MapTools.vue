@@ -12,7 +12,11 @@
 export default {
     name: 'MapTools',
     methods: {
-        open() {
+        openXZQDHPannel() {
+            let currentVisible = this.$store.getters._getDefaultXZQDHVisible;
+            this.$store.commit('_setDefaultXZQDHVisible', !currentVisible);
+        },
+        openMapTreePannel() {
             let currentVisible = this.$store.getters._getDefaultMapTreeVisible;
             this.$store.commit('_setDefaultMapTreeVisible', !currentVisible);
             console.log(currentVisible);
@@ -21,9 +25,10 @@ export default {
             console.log(e.target.id);
             switch (e.target.id) {
                 case 'xzqdh':
+                    this.openXZQDHPannel();
                     break;
                 case 'maptree':
-                    this.open();
+                    this.openMapTreePannel();
                     break;
                 case 'distance':
                     break;

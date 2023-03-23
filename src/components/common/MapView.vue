@@ -23,6 +23,7 @@ export default {
         this._createMapView();
     },
     methods: {
+        // 创建地图视图，将需要用到的API模块加载进来，再应用相应的模块开发需要的功能
         async _createMapView() {
             const [Map, Mapview, Basemap, TileLayer, BasemapToggle, ScaleBar, Zoom] = await loadModules(
                 [
@@ -49,10 +50,12 @@ export default {
                 id: 'basemap',
             });
 
+            // 定义底图数据
             const map = new Map({
                 basemap,
             });
 
+            // 实例化视图控件，并将控件绑定到容器上
             const view = new Mapview({
                 container: 'mapview',
                 map: map,
@@ -69,7 +72,7 @@ export default {
             });
             view.ui.add(basemapToggle);
 
-            // 添加比例尺
+            // 添加比例尺，绑定到容器上
             const scaleBar = new ScaleBar({
                 view: view,
                 unit: 'metric',
@@ -77,14 +80,14 @@ export default {
             });
             view.ui.add(scaleBar);
 
-            // 添加缩放控件
+            // 添加缩放控件，绑定到容器上
             const zoom = new Zoom({
                 view: view,
                 container: 'zoom',
             });
             view.ui.add(zoom);
 
-            view.ui.components = [];
+            view.ui.components = []; //清空view中自带的控件
             // console.log('test测试');
             this.$store.commit('_setDefaultView', view);
         },
