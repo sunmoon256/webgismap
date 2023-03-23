@@ -103,7 +103,8 @@ export default {
             if (value) {
                 this.getCityAndCountyData(value);
             } else {
-                this.cityAndCountyOptions = [];
+                // this.cityAndCountyOptions = [];
+                console.log('值是空' + value);
             }
         },
         // delValue() {
@@ -166,10 +167,10 @@ export default {
             const view = this.$store.getters._getDefaultView;
             if (type === 'city') {
                 code = val.toString().substring(0, 4);
-                serverUrl = 'http://localhost:6080/arcgis/rest/services/test/city/FeatureServer/0';
+                serverUrl = 'http://localhost:6080/arcgis/rest/services/test2/city_web/FeatureServer/0';
             } else if (type === 'county') {
-                code = val.toString().subString(0, 6);
-                serverUrl = 'http://localhost:6080/arcgis/rest/services/test/county/FeatureServer';
+                code = val.toString().substring(0, 6);
+                serverUrl = 'http://localhost:6080/arcgis/rest/services/test2/county_web/FeatureServer/0';
             }
 
             const [QueryTask, Query, Graphic] = await loadModules(
@@ -182,9 +183,9 @@ export default {
             let query = new Query();
             query.returnGeometry = true;
             query.outFields = ['*'];
-            query.where = "Code like '" + code + "%'";
+            query.where = "code like '" + code + "%'";
 
-            let results = queryTask.execute(query);
+            let results = await queryTask.execute(query);
 
             // 渲染和定位
             const featuresResult = results.features[0];
@@ -194,7 +195,7 @@ export default {
             const fillSymbol = {
                 type: 'simple-fill',
                 color: [188, 240, 234, 0.1],
-                online: {
+                outline: {
                     color: '#00FFFF',
                     width: 2,
                 },
@@ -283,7 +284,7 @@ export default {
 .county-item:hover {
     color: #409eff;
 }
-tr {
+.XZQDHComponent-pannel tr {
     display: block; /*将tr设置为块状元素*/
     margin-bottom: 15px;
 }
