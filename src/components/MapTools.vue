@@ -42,7 +42,7 @@ export default {
         });
     },
     methods: {
-        // 初始化绘制工具
+        // 初始化绘制工具---------有一个问题，为什么graphicsLayer与sketchViewModel都没有被定义，加上_self却都能使用了呢
         async initSketchTool() {
             const _self = this;
             const view = _self.$store.getters._getDefaultView;
@@ -55,13 +55,13 @@ export default {
             const resultLayer = view.map.findLayerById('polygonGraphicLayer');
             if (resultLayer) view.map.remove(resultLayer);
 
-            const graphicsLayer = new GraphicsLayer({
+            _self.graphicsLayer = new GraphicsLayer({
                 id: 'polygonGraphicLayer',
                 elevationInfo: {
                     mode: 'on-the-ground',
                 },
             });
-            view.map.add(graphicsLayer);
+            view.map.add(_self.graphicsLayer);
 
             const polygonSymbol = {
                 type: 'simple-fill',
@@ -75,7 +75,7 @@ export default {
             _self.sketchViewModel = new SketchViewModel({
                 updateOnGraphicClick: false,
                 view,
-                layer: graphicsLayer,
+                layer: _self.graphicsLayer,
                 polygonSymbol,
             });
         },
@@ -142,12 +142,13 @@ export default {
             _self.sketchViewModel.on('create-complete', function (event) {
                 const graphic = new Graphic({
                     geometry: event.geometry,
-                    symbol: _self.sketchViewModel.graphic.symbol,
+                    symbol: _self.sketchViewModel.graphic.symbol, //这句话是什么意思？
                 });
                 _self.graphicsLayer.add(graphic);
             });
             _self.sketchViewModel.on('create', function (event) {
                 if (event.state === 'complete') {
+                    // 执行空间查询
                     _self.handleSpaceQuery(event.graphic);
                 }
             });
@@ -247,9 +248,10 @@ export default {
                         height: '32px',
                     },
                 },
+                // 这里的fields跟resultData的属性字段有什么不同？，但应该是与template里面的fields是对应的
                 fields: [
                     {
-                        name: 'OBJECTID',
+                        name: 'ObjectID',
                         type: 'oid',
                     },
                     {
@@ -269,7 +271,7 @@ export default {
                         type: 'string',
                     },
                 ],
-                popupTemplate: template,
+                popupTemplate: template, //弹窗应用提前设置好的模板样式
             });
             view.map.add(queryResultLayer);
         },
@@ -288,7 +290,7 @@ export default {
                         attributes: {
                             ObjectID: key + 1,
                             name: value.attributes.name,
-                            type: value.attributes.type,
+                            type: value.attributes.style,
                             tieluju: value.attributes.tieluju,
                             address: value.attributes.address,
                         },
@@ -301,7 +303,9 @@ export default {
         handleClearMap() {
             const view = this.$store.getters._getDefaultView;
             const resultLayer3 = view.map.findLayerById('layid');
+            const resultLayer4 = view.map.findLayerById('initResultLayer');
             if (resultLayer3) view.map.remove(resultLayer3);
+            if (resultLayer4) view.map.remove(resultLayer4);
         },
     },
 };

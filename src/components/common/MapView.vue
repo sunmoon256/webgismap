@@ -4,6 +4,9 @@
         <div id="basemaptoggle"></div>
         <div id="scalbar"></div>
         <div id="zoom"></div>
+        <div class="view-change" @click="handleViewChange">
+            <span>{{ viewModel }}</span>
+        </div>
     </div>
 </template>
 
@@ -18,6 +21,11 @@ const options = {
 export default {
     name: 'MapView',
     components: {},
+    data() {
+        return {
+            viewModel: '3D',
+        };
+    },
     mounted: function () {
         // console.log(this.$store.state._defaultView);
         this._createMapView();
@@ -25,6 +33,10 @@ export default {
     methods: {
         // 创建地图视图，将需要用到的API模块加载进来，再应用相应的模块开发需要的功能
         async _createMapView() {
+            // 删除标签内的全部内容
+            document.getElementById('basemaptoggle').innerHTML = '';
+            document.getElementById('scalbar').innerHTML = '';
+            document.getElementById('zoom').innerHTML = '';
             const [Map, Mapview, Basemap, TileLayer, BasemapToggle, ScaleBar, Zoom] = await loadModules(
                 [
                     'esri/Map',
@@ -91,6 +103,58 @@ export default {
             // console.log('test测试');
             this.$store.commit('_setDefaultView', view);
         },
+        // 创建三维视图
+        async _createScenceView() {
+            document.getElementById('basemaptoggle').innerHTML = '';
+            document.getElementById('scalbar').innerHTML = '';
+            document.getElementById('zoom').innerHTML = '';
+            const [Map, SceneView, Basemap, TileLayer] = await loadModules(
+                ['esri/Map', 'esri/views/SceneView', 'esri/Basemap', 'esri/layers/TileLayer'],
+                options,
+            );
+
+            let basemap = new Basemap({
+                baseLayers: [
+                    new TileLayer({
+                        url: 'http://map.geoq.cn/arcgis/rest/services/ChinaOnlineStreetPurplishBlue/MapServer',
+                        title: 'Basemap',
+                    }),
+                ],
+                title: 'basemap',
+                id: 'basemap',
+            });
+
+            const map = new Map({
+                basemap,
+            });
+
+            const sceneView = new SceneView({
+                container: 'mapview',
+                map: map,
+            });
+
+            // setTimeout() 是属于 window 的方法，该方法用于在指定的毫秒数后调用函数或计算表达式。
+            setTimeout(() => {
+                sceneView.goTo({
+                    center: [113.828185, 34.824426],
+                    zoom: 10,
+                });
+            }, 3000);
+
+            sceneView.ui.components = [];
+
+            this.$store.commit('_setDefaultView', sceneView);
+        },
+        // 二三维切换
+        handleViewChange() {
+            if (this.viewModel === '3D') {
+                this._createScenceView();
+                this.viewModel = '2D';
+            } else {
+                this._createMapView();
+                this.viewModel = '3D';
+            }
+        },
     },
 };
 </script>
@@ -116,5 +180,18 @@ export default {
     position: absolute;
     right: 15px;
     bottom: 100px;
+}
+.view-change {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    right: 15px;
+    bottom: 180px;
+    background-color: #fff;
+    cursor: pointer;
+    text-align: center;
+}
+.view-change {
+    line-height: 32px;
 }
 </style>
