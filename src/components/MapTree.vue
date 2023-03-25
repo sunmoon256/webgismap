@@ -68,12 +68,12 @@ export default {
                         {
                             label: '火车站点数据 WGS84',
                             layid: 'layid',
-                            layurl: 'http://localhost:6080/arcgis/rest/services/test/traindot_proj/FeatureServer',
+                            layurl: 'http://localhost:6080/arcgis/rest/services/test2/trainstation_wgs84/FeatureServer',
                         },
                         {
                             label: '火车站点数据 WebMercator',
                             layid: 'layid',
-                            layurl: 'http://localhost:6080/arcgis/rest/services/test/traindot_wgs84/FeatureServer',
+                            layurl: 'http://localhost:6080/arcgis/rest/services/test2/trainstation_web/FeatureServer',
                         },
                     ],
                 },

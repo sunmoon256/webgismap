@@ -7,6 +7,8 @@ const state = {
     _defaultView: '', //系统默认地图view
     _defaultXZQDHVisible: false, //行政区划面板默认隐藏
     _defaultMapTreeVisible: false, //地图目录树显示/隐藏
+    _defaultSQResultVisible: false, //空间查询结果面板
+    _defaultSQResult: [], //空间查询结果
 };
 
 const getters = {
@@ -20,6 +22,12 @@ const getters = {
     _getDefaultMapTreeVisible() {
         return state._defaultMapTreeVisible;
     },
+    _getDefaultSQResultVisible() {
+        return state._defaultSQResultVisible;
+    },
+    _getDefaultSQResult() {
+        return state._defaultSQResult;
+    },
 };
 
 const mutations = {
@@ -31,6 +39,12 @@ const mutations = {
     },
     _setDefaultMapTreeVisible(state, value) {
         state._defaultMapTreeVisible = value;
+    },
+    _setDefaultSQResultVisible(state, value) {
+        state._defaultSQResultVisible = value;
+    },
+    _setDefaultSQResult(state, value) {
+        state._defaultSQResult = value;
     },
 };
 

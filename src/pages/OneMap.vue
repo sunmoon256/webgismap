@@ -4,6 +4,7 @@
         <MapTools />
         <MapTree />
         <XZQDHComponent />
+        <SpaceQueryResultT />
     </div>
 </template>
 
@@ -12,6 +13,7 @@ import MapView from '../components/common/MapView';
 import MapTools from '../components/MapTools';
 import MapTree from '@/components/MapTree';
 import XZQDHComponent from '@/components/XZQDHComponent';
+import SpaceQueryResultT from '@/components/SpaceQueryResultT';
 
 export default {
     name: 'OneMap',
@@ -20,6 +22,7 @@ export default {
         MapTools,
         MapTree,
         XZQDHComponent,
+        SpaceQueryResultT,
     },
     methods: {},
 };

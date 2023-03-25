@@ -22,18 +22,64 @@
 </template>
 
 <script>
+import { loadModules } from 'esri-loader';
+
+const options = {
+    url: 'https://js.arcgis.com/4.18/init.js',
+    css: 'https://js.arcgis.com/4.18/esri/themes/light/main.css',
+};
+
 export default {
     name: 'MapTools',
+    mounted: function () {
+        // setInterval(code，millisec)： 间隔指定的毫秒数不停地执行指定的代码，定时器
+        const checkView = setInterval(() => {
+            if (this.$store.getters._getDefaultView) {
+                this.initSketchTool();
+                // clearInterval()： 用于停止 setInterval() 方法执行的函数代码
+                clearInterval(checkView);
+            }
+        });
+    },
     methods: {
-        openXZQDHPannel() {
-            let currentVisible = this.$store.getters._getDefaultXZQDHVisible;
-            this.$store.commit('_setDefaultXZQDHVisible', !currentVisible);
+        // 初始化绘制工具
+        async initSketchTool() {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+            // 1.绘制面状区域
+            const [SketchViewModel, GraphicsLayer] = await loadModules(
+                ['esri/widgets/Sketch/SketchViewModel', 'esri/layers/GraphicsLayer'],
+                options,
+            );
+
+            const resultLayer = view.map.findLayerById('polygonGraphicLayer');
+            if (resultLayer) view.map.remove(resultLayer);
+
+            const graphicsLayer = new GraphicsLayer({
+                id: 'polygonGraphicLayer',
+                elevationInfo: {
+                    mode: 'on-the-ground',
+                },
+            });
+            view.map.add(graphicsLayer);
+
+            const polygonSymbol = {
+                type: 'simple-fill',
+                color: 'rgba(216,30,6,0.4)',
+                style: 'solid',
+                outline: {
+                    color: '#d81e06',
+                    width: 1,
+                },
+            };
+            _self.sketchViewModel = new SketchViewModel({
+                updateOnGraphicClick: false,
+                view,
+                layer: graphicsLayer,
+                polygonSymbol,
+            });
         },
-        openMapTreePannel() {
-            let currentVisible = this.$store.getters._getDefaultMapTreeVisible;
-            this.$store.commit('_setDefaultMapTreeVisible', !currentVisible);
-            console.log(currentVisible);
-        },
+
         handleMapToolsitemClick(e) {
             // console.log(e.target.id);
             switch (e.target.id) {
@@ -44,6 +90,7 @@ export default {
                     this.openMapTreePannel();
                     break;
                 case 'clearscreen':
+                    this.handleClearMap();
                     break;
             }
         },
@@ -54,14 +101,207 @@ export default {
                 case 'area':
                     break;
                 case 'spacequery':
+                    this.initSpaceQuery();
                     break;
                 case 'morescreen':
+                    this.$router.push('/onemap/morescreen');
                     break;
                 case 'swipeana':
                     break;
                 default:
                     break;
             }
+        },
+        openXZQDHPannel() {
+            let currentVisible = this.$store.getters._getDefaultXZQDHVisible;
+            this.$store.commit('_setDefaultXZQDHVisible', !currentVisible);
+        },
+        openMapTreePannel() {
+            let currentVisible = this.$store.getters._getDefaultMapTreeVisible;
+            this.$store.commit('_setDefaultMapTreeVisible', !currentVisible);
+            console.log(currentVisible);
+        },
+        // 初始化空间查询
+        async initSpaceQuery() {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+            const [Graphic, GraphicsLayer] = await loadModules(['esri/Graphic', 'esri/layers/GraphicsLayer'], options);
+
+            const resultLayer = view.map.findLayerById('polygonGraphicLayer');
+            if (resultLayer) view.map.remove(resultLayer);
+            _self.graphicsLayer = new GraphicsLayer({
+                id: 'polygonGraphicLayer',
+                elevationInfo: {
+                    mode: 'on-the-ground',
+                },
+            });
+            view.map.add(_self.graphicsLayer);
+
+            _self.sketchViewModel.create('polygon');
+
+            _self.sketchViewModel.on('create-complete', function (event) {
+                const graphic = new Graphic({
+                    geometry: event.geometry,
+                    symbol: _self.sketchViewModel.graphic.symbol,
+                });
+                _self.graphicsLayer.add(graphic);
+            });
+            _self.sketchViewModel.on('create', function (event) {
+                if (event.state === 'complete') {
+                    _self.handleSpaceQuery(event.graphic);
+                }
+            });
+        },
+        handleSpaceQuery(graphic) {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+
+            const resultLayer = view.map.findLayerById('layid');
+            if (!resultLayer) {
+                _self.$message({
+                    message: '尚未添加业务图层，不能及进行空间查询',
+                    type: 'warning',
+                });
+                return;
+            }
+
+            const queryPoint = resultLayer.createQuery();
+            queryPoint.geometry = graphic.geometry;
+            resultLayer
+                .queryFeatures(queryPoint)
+                .then(function (results) {
+                    let currentData = [];
+                    if (results.features.length > 0) {
+                        // 符号化渲染图层
+                        _self.renderResultLayer(results.features);
+                        //实例化表格数据
+                        results.features.map((item, index) => {
+                            currentData.push({
+                                name: item.attributes.name,
+                                type: item.attributes.style,
+                                tieluju: item.attributes.tieluju,
+                                address: item.attributes.address,
+                                lon: item.attributes.lon,
+                                lat: item.attributes.lat,
+                                key: index,
+                            });
+                        });
+                    } else {
+                        currentData.length = 0;
+                    }
+                    _self.$message({
+                        message: `查询成功，共查到 ${results.features.length} 条数据`,
+                        type: 'success',
+                    });
+                    _self.$store.commit('_setDefaultSQResult', currentData);
+                    _self.$store.commit('_setDefaultSQResultVisible', true);
+                })
+                .catch(function (error) {
+                    console.log(error);
+                    _self.$message.error('空间查询失败，请联系管理员');
+                });
+        },
+        async renderResultLayer(resultFeatures) {
+            const view = this.$store.getters._getDefaultView;
+            const [FeatureLayer] = await loadModules(['esri/layers/FeatureLayer'], options);
+            const resultLayer = view.map.findLayerById('initResultLayer');
+            if (resultLayer) view.map.remove(resultLayer);
+            const resultData = this._translateLonLat(resultFeatures);
+            //实例化弹窗
+            let template = {
+                title: '{name}-{tieluju}',
+                content: [
+                    {
+                        type: 'fields',
+                        fieldInfos: [
+                            {
+                                fieldName: 'name',
+                                label: '名称',
+                            },
+                            {
+                                fieldName: 'type',
+                                label: '类型',
+                            },
+                            {
+                                fieldName: 'tieluju',
+                                label: '铁路局',
+                            },
+                            {
+                                fieldName: 'address',
+                                label: '地址',
+                            },
+                        ],
+                    },
+                ],
+            };
+            const queryResultLayer = new FeatureLayer({
+                source: resultData,
+                id: 'initResultLayer',
+                objectIdField: 'ObjectID',
+                renderer: {
+                    type: 'simple', // autocasts as new SimpleRenderer()
+                    symbol: {
+                        type: 'picture-marker', // autocasts as new PictureMarkerSymbol()
+                        url: `static/icon/train.png`,
+                        width: '32px',
+                        height: '32px',
+                    },
+                },
+                fields: [
+                    {
+                        name: 'OBJECTID',
+                        type: 'oid',
+                    },
+                    {
+                        name: 'name',
+                        type: 'string',
+                    },
+                    {
+                        name: 'type',
+                        type: 'string',
+                    },
+                    {
+                        name: 'tieluju',
+                        type: 'string',
+                    },
+                    {
+                        name: 'address',
+                        type: 'string',
+                    },
+                ],
+                popupTemplate: template,
+            });
+            view.map.add(queryResultLayer);
+        },
+        //处理经纬度数据，返回features
+        _translateLonLat(data) {
+            const _self = this;
+            if (data.length > 0) {
+                _self.geoData = [];
+                data.map((value, key) => {
+                    _self.geoData.push({
+                        geometry: {
+                            type: 'point',
+                            x: Number(value.attributes.lon),
+                            y: Number(value.attributes.lat),
+                        },
+                        attributes: {
+                            ObjectID: key + 1,
+                            name: value.attributes.name,
+                            type: value.attributes.type,
+                            tieluju: value.attributes.tieluju,
+                            address: value.attributes.address,
+                        },
+                    });
+                });
+            }
+            return _self.geoData;
+        },
+        // 清屏
+        handleClearMap() {
+            const view = this.$store.getters._getDefaultView;
+            const resultLayer3 = view.map.findLayerById('layid');
+            if (resultLayer3) view.map.remove(resultLayer3);
         },
     },
 };
