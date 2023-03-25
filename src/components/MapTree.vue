@@ -75,6 +75,16 @@ export default {
                             layid: 'layid',
                             layurl: 'http://localhost:6080/arcgis/rest/services/test2/trainstation_web/FeatureServer',
                         },
+                        {
+                            label: '卷帘分析 top',
+                            layid: 'swipeLayerTop',
+                            layurl: 'http://localhost:6080/arcgis/rest/services/test/province/FeatureServer',
+                        },
+                        {
+                            label: '卷帘分析 bottom',
+                            layid: 'swipeLayerBottom',
+                            layurl: 'http://localhost:6080/arcgis/rest/services/test/city/FeatureServer',
+                        },
                     ],
                 },
             ],
@@ -89,8 +99,10 @@ export default {
             console.log(data);
             if (data.layurl) {
                 // 删除已添加的图层
+                // 卷帘分析的图层可以无限次的添加，会降低网站的显示效果
+                // 应该设置删除已经添加的卷帘分析的图层
                 const view = this.$store.getters._getDefaultView;
-                const resultLayer = view.map.findLayerById('layid');
+                const resultLayer = view.map.findLayerById(data.layid);
                 if (resultLayer) {
                     view.map.remove(resultLayer);
                 }

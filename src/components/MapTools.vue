@@ -15,6 +15,7 @@
                 <el-dropdown-item icon="el-icon-search" command="spacequery">空间查询</el-dropdown-item>
                 <el-dropdown-item icon="el-icon-film" command="morescreen">多屏对比</el-dropdown-item>
                 <el-dropdown-item icon="el-icon-reading" command="swipeana">卷帘分析</el-dropdown-item>
+                <el-dropdown-item icon="el-icon-reading" command="mapprint">地图打印</el-dropdown-item>
             </el-dropdown-menu>
         </el-dropdown>
         <span class="maptools-item" @click="handleMapToolsitemClick" id="clearscreen">清屏</span>
@@ -97,8 +98,10 @@ export default {
         handleCommand(command) {
             switch (command) {
                 case 'distance':
+                    this.initDistance();
                     break;
                 case 'area':
+                    this.initArea();
                     break;
                 case 'spacequery':
                     this.initSpaceQuery();
@@ -107,6 +110,10 @@ export default {
                     this.$router.push('/onemap/morescreen');
                     break;
                 case 'swipeana':
+                    this.initSwipe();
+                    break;
+                case 'mapprint':
+                    this._initMapPrint();
                     break;
                 default:
                     break;
@@ -120,6 +127,30 @@ export default {
             let currentVisible = this.$store.getters._getDefaultMapTreeVisible;
             this.$store.commit('_setDefaultMapTreeVisible', !currentVisible);
             console.log(currentVisible);
+        },
+        // 地图距离测量
+        async initDistance() {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+            const [DistanceMeasurement2D] = await loadModules(['esri/widgets/DistanceMeasurement2D'], options);
+            if (this.measurementWidget) this.measurementWidget.destroy();
+            this.measurementWidget = new DistanceMeasurement2D({
+                view,
+            });
+            view.ui.add(this.measurementWidget, 'top-left');
+        },
+
+        // 地图面积测量
+        async initArea() {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+            const [AreaMeasurement2D] = await loadModules(['esri/widgets/AreaMeasurement2D'], options);
+
+            if (this.measurementWidget) this.measurementWidget.destroy();
+            this.measurementWidget = new AreaMeasurement2D({
+                view,
+            });
+            view.ui.add(this.measurementWidget, 'top-left');
         },
         // 初始化空间查询
         async initSpaceQuery() {
@@ -299,13 +330,82 @@ export default {
             }
             return _self.geoData;
         },
+
+        // 卷帘分析
+        async initSwipe() {
+            const _self = this;
+            const view = this.$store.getters._getDefaultView;
+            const [Swipe] = await loadModules(['esri/widgets/Swipe'], options);
+            const topLayer = view.map.findLayerById('swipeLayerTop');
+            const bottomLayer = view.map.findLayerById('swipeLayerBottom');
+            if (topLayer && bottomLayer) {
+                _self.swipe = new Swipe({
+                    leadingLayers: [topLayer],
+                    trailingLayers: [bottomLayer],
+                    position: 50,
+                    view: view,
+                });
+                // 地图控件都是通过ui添加的
+                view.ui.add(_self.swipe);
+            } else {
+                _self.message({
+                    message: '请至少添加两张业务图层',
+                    type: 'warning',
+                });
+                return;
+            }
+        },
+
+        // 地图打印
+        async _initMapPrint() {
+            const _self = this;
+            const view = _self.$store.getters._getDefaultView;
+            const [PrintTask, PrintTemplate, PrintParameters] = await loadModules(
+                ['esri/tasks/PrintTask', 'esri/tasks/support/PrintTemplate', 'esri/tasks/support/PrintParameters'],
+                options,
+            );
+            let printTask = new PrintTask({
+                url: 'https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task',
+                // 使用别人的GP服务是可以的吗，答案是可以的
+            });
+
+            let template = new PrintTemplate({
+                format: 'pdf',
+                exportOptions: {
+                    dpi: 100,
+                },
+                layout: 'a4-portrait',
+                layoutOptions: {
+                    titleText: '地图出图demo',
+                    authorText: 'unalome',
+                    customTextElements: [{ location: '河南省-郑州市' }, { date: '25/03/2023,21:1:13 AM' }],
+                },
+            });
+
+            let params = new PrintParameters({
+                view: view,
+                template: template,
+            });
+
+            printTask.execute(params).then((printResult, printError) => {
+                console.log(printResult, printError);
+                if (printResult.url) window.open(printResult.url);
+                if (printError) this.$message.error('地图打印失败'); //不懂，这也是输出message的一种方式吗
+            });
+        },
         // 清屏
         handleClearMap() {
             const view = this.$store.getters._getDefaultView;
+            const resultLayer1 = view.map.findLayerById('swipeLayerTop');
+            const resultLayer2 = view.map.findLayerById('swipeLayerBottom');
             const resultLayer3 = view.map.findLayerById('layid');
             const resultLayer4 = view.map.findLayerById('initResultLayer');
+            if (resultLayer1) view.map.remove(resultLayer1);
+            if (resultLayer2) view.map.remove(resultLayer2);
             if (resultLayer3) view.map.remove(resultLayer3);
             if (resultLayer4) view.map.remove(resultLayer4);
+            if (this.swipe) this.swipe.destroy();
+            if (this.measurementWidget) this.measurementWidget.destroy();
         },
     },
 };
